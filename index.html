@@ -19,7 +19,6 @@
       --border:    #e2e5ea;
       --border2:   #cdd1d9;
       --accent:    #0070f3;
-      --accent-dk: #0058c4;
       --success:   #16a34a;
       --warn:      #d97706;
       --danger:    #dc2626;
@@ -34,42 +33,32 @@
 
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
 
-    /* ── SCREENS ── */
-    .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 200; }
-    .screen.hidden { display: none; }
-
-    /* Login */
-    #login-screen { background: var(--bg); }
-    .login-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 40px 48px; width: 380px;
-      box-shadow: var(--shadow-lg); display: flex; flex-direction: column; align-items: center; gap: 24px;
+    /* ── LOADING ── */
+    #loading-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px; z-index: 300;
     }
-    .login-logo { width: 48px; height: 48px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-    .login-logo svg { width: 26px; height: 26px; fill: white; }
-    .login-card h1 { font-size: 20px; font-weight: 600; text-align: center; }
-    .login-card p { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; }
-    .btn-login {
-      width: 100%; padding: 12px; background: var(--accent); color: white;
-      border: none; border-radius: var(--radius); font-size: 15px; font-weight: 500;
-      cursor: pointer; font-family: inherit; transition: background 0.15s;
-    }
-    .btn-login:hover { background: var(--accent-dk); }
-    .login-note { font-size: 12px; color: var(--text-3); text-align: center; }
+    #loading-screen.hidden { display: none; }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-screen p { font-size: 14px; color: var(--text-3); }
 
-    /* Error */
-    #error-screen { background: var(--bg); }
+    /* ── ERROR ── */
+    #error-screen { position: fixed; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 300; }
+    #error-screen.visible { display: flex; }
     .error-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 40px 48px; width: 420px;
+      border-radius: 16px; padding: 40px 48px; width: 420px; max-width: 90vw;
       box-shadow: var(--shadow-lg); text-align: center; display: flex; flex-direction: column; gap: 16px;
     }
     .error-card h2 { font-size: 18px; font-weight: 600; }
     .error-card p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
     .error-card code { background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
 
-    /* ── MAIN APP ── */
-    #app-screen { flex-direction: column; align-items: stretch; justify-content: flex-start; }
+    /* ── APP ── */
+    #app { position: fixed; inset: 0; display: none; flex-direction: column; }
+    #app.visible { display: flex; }
 
     /* Header */
     #header {
@@ -80,6 +69,7 @@
     .header-logo svg { width: 16px; height: 16px; fill: white; }
     #app-title { font-size: 14px; font-weight: 600; white-space: nowrap; }
 
+    /* Layer picker — only shown for multi-layer maps */
     #layer-select-wrap { margin-left: 8px; }
     #layer-select-wrap.hidden { display: none; }
     #layer-select {
@@ -89,10 +79,8 @@
     }
     #layer-select:focus { border-color: var(--accent); }
 
-    #user-badge { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    #user-badge { margin-left: auto; }
     #user-name { font-size: 13px; color: var(--text-2); }
-    #btn-logout { font-size: 12px; color: var(--text-3); background: none; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-    #btn-logout:hover { border-color: var(--border2); color: var(--text-2); }
 
     /* Map */
     #map-wrap { flex: 1; position: relative; }
@@ -137,31 +125,23 @@
 </head>
 <body>
 
-<!-- ── LOGIN ── -->
-<div id="login-screen" class="screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-    </div>
-    <h1>Location Editor</h1>
-    <p>Sign in with your ArcGIS Online account to access and edit your locations.</p>
-    <button class="btn-login" id="btn-login">Sign in with ArcGIS Online</button>
-    <span class="login-note">Your organisation's ArcGIS credentials are required</span>
-  </div>
+<!-- Loading -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p>Loading your map…</p>
 </div>
 
-<!-- ── ERROR ── -->
-<div id="error-screen" class="screen hidden">
+<!-- Error -->
+<div id="error-screen">
   <div class="error-card">
     <div style="font-size:36px">⚠️</div>
-    <h2>Configuration Error</h2>
-    <p id="error-msg">No layer URL provided.</p>
-    <p style="font-size:13px;color:var(--text-3)">The iframe <code>src</code> must include a <code>?layer=</code> parameter.</p>
+    <h2 id="error-title">Something went wrong</h2>
+    <p id="error-msg"></p>
   </div>
 </div>
 
-<!-- ── APP ── -->
-<div id="app-screen" class="screen hidden">
+<!-- App -->
+<div id="app">
   <div id="header">
     <div class="header-logo">
       <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
@@ -172,7 +152,6 @@
     </div>
     <div id="user-badge">
       <span id="user-name"></span>
-      <button id="btn-logout">Sign out</button>
     </div>
   </div>
 
@@ -214,36 +193,17 @@
 </div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────
-const CLIENT_ID = "Wd85I6OWMyGPB5L1";
+// ── URL PARAMS ────────────────────────────────────────────────────
+// Single web map:   ?map=WEBMAP_ITEM_ID
+// Custom title:     ?map=WEBMAP_ITEM_ID&title=My Map
 // ─────────────────────────────────────────────────────────────────
 
-// ── Parse URL params ──────────────────────────────────────────────
-// Single layer:  ?layer=https://services.../FeatureServer/0
-// Multi layer:   ?layer=https://.../0,Label A|https://.../1,Label B
-// Custom title:  &title=My Map
 function parseParams() {
   const p = new URLSearchParams(window.location.search);
-  const raw = p.get("layer") || "";
-  const title = p.get("title") || "Location Editor";
-
-  if (!raw) return { layers: [], title };
-
-  const layers = raw.split("|").map(segment => {
-    const commaIdx = segment.indexOf(",");
-    const url   = commaIdx > -1 ? segment.slice(0, commaIdx).trim() : segment.trim();
-    const label = commaIdx > -1 ? segment.slice(commaIdx + 1).trim() : urlToLabel(url);
-    return { url, label };
-  }).filter(l => l.url);
-
-  return { layers, title };
-}
-
-function urlToLabel(url) {
-  if (!url) return "Layer";
-  const parts = url.split("/");
-  const svc = parts[parts.length - 3] || parts[parts.length - 1];
-  return svc.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim();
+  return {
+    mapId: p.get("map") || "",
+    title: p.get("title") || "Location Editor"
+  };
 }
 
 function guessNameField(attrs) {
@@ -252,96 +212,75 @@ function guessNameField(attrs) {
   return Object.keys(attrs)[0] || "";
 }
 
-// ── App ───────────────────────────────────────────────────────────
+function showError(title, msg) {
+  document.getElementById("loading-screen").classList.add("hidden");
+  document.getElementById("error-title").textContent = title;
+  document.getElementById("error-msg").textContent = msg;
+  document.getElementById("error-screen").classList.add("visible");
+}
+
 require([
-  "esri/identity/OAuthInfo",
   "esri/identity/IdentityManager",
-  "esri/Map",
+  "esri/WebMap",
   "esri/views/MapView",
-  "esri/layers/FeatureLayer",
   "esri/layers/GraphicsLayer",
   "esri/Graphic",
   "esri/widgets/Home",
   "esri/widgets/ScaleBar"
-], function(OAuthInfo, IdentityManager, Map, MapView, FeatureLayer, GraphicsLayer, Graphic, Home, ScaleBar) {
+], function(IdentityManager, WebMap, MapView, GraphicsLayer, Graphic, Home, ScaleBar) {
 
-  const { layers, title } = parseParams();
+  const { mapId, title } = parseParams();
   document.title = title;
   document.getElementById("app-title").textContent = title;
 
-  // No layer → show error
-  if (!layers.length) {
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("error-screen").classList.remove("hidden");
+  // No map ID → show error
+  if (!mapId) {
+    showError(
+      "Configuration Error",
+      "No Web Map ID was provided. The iframe src must include a ?map= parameter with the ArcGIS Web Map item ID."
+    );
     return;
   }
 
-  // OAuth
-  const info = new OAuthInfo({
-    appId: CLIENT_ID,
-    popup: false
-  });
-  IdentityManager.registerOAuthInfos([info]);
-
-  document.getElementById("btn-login").addEventListener("click", () => {
-    IdentityManager.getCredential("https://www.arcgis.com/sharing");
-  });
-
-  document.getElementById("btn-logout").addEventListener("click", () => {
-    IdentityManager.destroyCredentials();
-    location.reload();
-  });
-
-  // Already signed in?
+  // Pick up the existing ArcGIS Online session silently
   IdentityManager.checkSignInStatus("https://www.arcgis.com/sharing")
     .then(cred => initApp(cred))
-    .catch(() => { /* show login */ });
+    .catch(() => {
+      showError(
+        "Session not found",
+        "Please open this app from your ArcGIS Online Experience Builder page. You need to be signed into ArcGIS Online first."
+      );
+    });
 
-  IdentityManager.on("credential-create", cred => { if (cred) initApp(cred); });
-
-  // ── Init app after login ────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────
   function initApp(credential) {
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("app-screen").classList.remove("hidden");
+
     document.getElementById("user-name").textContent = credential.userId || "";
 
-    // Layer dropdown — only shown when more than one layer
-    const selectEl = document.getElementById("layer-select");
-    if (layers.length > 1) {
-      document.getElementById("layer-select-wrap").classList.remove("hidden");
-      layers.forEach((l, i) => {
-        const opt = document.createElement("option");
-        opt.value = i;
-        opt.textContent = l.label;
-        selectEl.appendChild(opt);
-      });
-      selectEl.addEventListener("change", () => loadLayer(layers[+selectEl.value]));
-    }
+    // Load the Web Map — this brings in all layers, symbology, labels, basemap
+    const webmap = new WebMap({ portalItem: { id: mapId } });
 
-    // Map
-    const map = new Map({ basemap: "gray-vector" });
     const view = new MapView({
       container: "viewDiv",
-      map: map,
-      zoom: 6,
-      center: [-119.5, 36.8],
+      map: webmap,
       ui: { components: [] }
     });
+
     view.ui.add(new Home({ view }), "top-left");
     view.ui.add(new ScaleBar({ view, unit: "metric" }), "bottom-left");
 
     const ghostLayer = new GraphicsLayer();
-    map.add(ghostLayer);
+    webmap.add(ghostLayer);
 
     // State
-    let currentFeatureLayer = null;
-    let currentLayerView    = null;
-    let selectedGraphic     = null;
-    let highlightHandle     = null;
-    let capturingDrag       = false;
-    let hasMoved            = false;
+    let editableLayers    = [];   // all point FeatureLayers found in the map
+    let activeLayer       = null;
+    let activeLayerView   = null;
+    let selectedGraphic   = null;
+    let highlightHandle   = null;
+    let capturingDrag     = false;
+    let hasMoved          = false;
 
-    // Helpers
     function setStatus(cls, txt) {
       document.getElementById("status-dot").className = cls;
       document.getElementById("status-text").textContent = txt;
@@ -373,44 +312,65 @@ require([
       }));
     }
 
-    // Load a feature layer
-    function loadLayer(layerDef) {
+    // Once the map loads, find all editable point layers
+    view.when(() => {
+      document.getElementById("loading-screen").classList.add("hidden");
+      document.getElementById("app").classList.add("visible");
+
+      // Collect all point FeatureLayers from the web map
+      editableLayers = webmap.layers.filter(l =>
+        l.type === "feature" && l.geometryType === "point"
+      ).toArray();
+
+      if (!editableLayers.length) {
+        showError("No point layers found", "This web map doesn't contain any point feature layers that can be edited.");
+        return;
+      }
+
+      // If multiple point layers → show dropdown so user can pick which to edit
+      if (editableLayers.length > 1) {
+        const selectEl = document.getElementById("layer-select");
+        document.getElementById("layer-select-wrap").classList.remove("hidden");
+        editableLayers.forEach((l, i) => {
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.textContent = l.title || `Layer ${i + 1}`;
+          selectEl.appendChild(opt);
+        });
+        selectEl.addEventListener("change", () => setActiveLayer(editableLayers[+selectEl.value]));
+      }
+
+      setActiveLayer(editableLayers[0]);
+
+    }).catch(err => {
+      console.error(err);
+      showError("Map failed to load", "Could not load the web map. Make sure the Map ID is correct and you have access to it.");
+    });
+
+    function setActiveLayer(layer) {
       clearSelection();
-      if (currentFeatureLayer) map.remove(currentFeatureLayer);
-      currentFeatureLayer = null;
-      currentLayerView = null;
-
-      const fl = new FeatureLayer({
-        url: layerDef.url,
-        outFields: ["*"],
-        popupEnabled: false,
-        renderer: {
-          type: "simple",
-          symbol: { type: "simple-marker", color: [0,112,243,0.85], size: 14, outline: { color: [255,255,255,0.9], width: 2 } }
-        }
-      });
-      map.add(fl);
-      currentFeatureLayer = fl;
-      fl.when(() => { view.goTo(fl.fullExtent).catch(() => {}); });
-      view.whenLayerView(fl).then(lv => { currentLayerView = lv; });
+      activeLayer = layer;
+      activeLayerView = null;
+      view.whenLayerView(layer).then(lv => { activeLayerView = lv; });
     }
-
-    loadLayer(layers[0]);
 
     // Click → select
     view.on("click", async (evt) => {
-      if (hasMoved) return;
-      if (!currentFeatureLayer) return;
-      const hit = await view.hitTest(evt, { include: currentFeatureLayer });
+      if (hasMoved || !activeLayer) return;
+      const hit = await view.hitTest(evt, { include: activeLayer });
       const res = hit.results[0];
       if (!res) { clearSelection(); return; }
 
       selectedGraphic = res.graphic;
       if (highlightHandle) highlightHandle.remove();
-      if (currentLayerView) highlightHandle = currentLayerView.highlight(selectedGraphic);
+      if (activeLayerView) highlightHandle = activeLayerView.highlight(selectedGraphic);
 
       const nameField = guessNameField(selectedGraphic.attributes);
-      showDetails(selectedGraphic.attributes[nameField], selectedGraphic.geometry.latitude, selectedGraphic.geometry.longitude);
+      showDetails(
+        selectedGraphic.attributes[nameField],
+        selectedGraphic.geometry.latitude,
+        selectedGraphic.geometry.longitude
+      );
       setStatus("", "Ready — drag the point to move it");
       document.getElementById("hint-toast").style.opacity = "0";
     });
@@ -419,11 +379,11 @@ require([
     const surface = view.surface;
 
     surface.addEventListener("pointerdown", async (e) => {
-      if (!selectedGraphic || !currentFeatureLayer || e.button !== 0) return;
-      const hit = await view.hitTest({ x: e.offsetX, y: e.offsetY }, { include: currentFeatureLayer });
+      if (!selectedGraphic || !activeLayer || e.button !== 0) return;
+      const hit = await view.hitTest({ x: e.offsetX, y: e.offsetY }, { include: activeLayer });
       const res = hit.results[0];
       if (!res) return;
-      const oidField = currentFeatureLayer.objectIdField || "OBJECTID";
+      const oidField = activeLayer.objectIdField || "OBJECTID";
       if (res.graphic.attributes[oidField] !== selectedGraphic.attributes[oidField]) return;
       surface.setPointerCapture(e.pointerId);
       capturingDrag = true;
@@ -463,10 +423,10 @@ require([
 
     view.on("drag", (e) => { if (capturingDrag) e.stopPropagation(); });
 
-    // Save to Feature Layer
+    // Save
     async function saveLocation(graphic, newGeom) {
       setStatus("saving", "Saving to database…");
-      const oidField = currentFeatureLayer.objectIdField || "OBJECTID";
+      const oidField = activeLayer.objectIdField || "OBJECTID";
       const oid = graphic.attributes[oidField];
       if (!oid) { setStatus("error", "Could not identify feature"); return; }
 
@@ -482,7 +442,7 @@ require([
       };
 
       try {
-        const result = await currentFeatureLayer.applyEdits({ updateFeatures: [updated] });
+        const result = await activeLayer.applyEdits({ updateFeatures: [updated] });
         if (result.updateFeatureResults[0]?.error) throw new Error(result.updateFeatureResults[0].error.message);
         Object.assign(graphic.attributes, attrs);
         const nameField = guessNameField(graphic.attributes);
