@@ -11,30 +11,19 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #f5f6f8;
-      --surface:   #ffffff;
-      --surface2:  #f0f2f5;
-      --border:    #e2e5ea;
-      --border2:   #cdd1d9;
-      --accent:    #0070f3;
-      --accent-dk: #0058c4;
-      --success:   #16a34a;
-      --warn:      #d97706;
-      --danger:    #dc2626;
-      --text:      #111318;
-      --text-2:    #4b5360;
-      --text-3:    #8a93a3;
-      --radius:    10px;
-      --radius-sm: 6px;
-      --shadow:    0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+      --bg: #f5f6f8; --surface: #ffffff; --surface2: #f0f2f5;
+      --border: #e2e5ea; --border2: #cdd1d9;
+      --accent: #0070f3; --accent-dk: #0058c4;
+      --success: #16a34a; --warn: #d97706; --danger: #dc2626;
+      --text: #111318; --text-2: #4b5360; --text-3: #8a93a3;
+      --radius: 10px; --radius-sm: 6px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
       --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
     }
-
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
 
-    /* ── LOADING ── */
+    /* LOADING */
     #loading-screen {
       position: fixed; inset: 0; background: var(--bg);
       display: flex; align-items: center; justify-content: center;
@@ -45,7 +34,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading-screen p { font-size: 14px; color: var(--text-3); }
 
-    /* ── LOGIN SCREEN ── */
+    /* LOGIN */
     #login-screen {
       position: fixed; inset: 0; background: var(--bg);
       display: none; align-items: center; justify-content: center; z-index: 200;
@@ -60,19 +49,12 @@
     .login-logo svg { width: 26px; height: 26px; fill: white; }
     .login-card h1 { font-size: 20px; font-weight: 600; text-align: center; }
     .login-card p { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; }
-    .btn-login {
-      width: 100%; padding: 12px; background: var(--accent); color: white;
-      border: none; border-radius: var(--radius); font-size: 15px; font-weight: 500;
-      cursor: pointer; font-family: inherit; transition: background 0.15s;
-    }
+    .btn-login { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; transition: background 0.15s; }
     .btn-login:hover { background: var(--accent-dk); }
     .login-note { font-size: 12px; color: var(--text-3); text-align: center; }
 
-    /* ── ERROR SCREEN ── */
-    #error-screen {
-      position: fixed; inset: 0; background: var(--bg);
-      display: none; align-items: center; justify-content: center; z-index: 300;
-    }
+    /* ERROR */
+    #error-screen { position: fixed; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 300; }
     #error-screen.visible { display: flex; }
     .error-card {
       background: var(--surface); border: 1px solid var(--border);
@@ -83,56 +65,37 @@
     .error-card p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
     .error-card code { background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
 
-    /* ── APP ── */
+    /* APP */
     #app { position: fixed; inset: 0; display: none; flex-direction: column; }
     #app.visible { display: flex; }
 
-    /* Header */
-    #header {
-      height: 52px; background: var(--surface); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0; z-index: 100;
-    }
+    #header { height: 52px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0; z-index: 100; }
     .header-logo { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .header-logo svg { width: 16px; height: 16px; fill: white; }
     #app-title { font-size: 14px; font-weight: 600; white-space: nowrap; }
-
     #layer-select-wrap { margin-left: 8px; }
     #layer-select-wrap.hidden { display: none; }
-    #layer-select {
-      height: 32px; padding: 0 10px; border: 1px solid var(--border2);
-      border-radius: var(--radius-sm); font-size: 13px; font-family: inherit;
-      background: var(--surface2); color: var(--text); cursor: pointer; outline: none; max-width: 260px;
-    }
+    #layer-select { height: 32px; padding: 0 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--surface2); color: var(--text); cursor: pointer; outline: none; max-width: 260px; }
     #layer-select:focus { border-color: var(--accent); }
-
     #user-badge { margin-left: auto; display: flex; align-items: center; gap: 8px; }
     #user-name { font-size: 13px; color: var(--text-2); }
     #btn-signout { font-size: 12px; color: var(--text-3); background: none; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     #btn-signout:hover { border-color: var(--border2); color: var(--text-2); }
 
-    /* Map */
     #map-wrap { flex: 1; position: relative; }
     #viewDiv { position: absolute; inset: 0; }
 
-    /* Panel */
-    #panel {
-      position: absolute; top: 12px; right: 12px; width: 280px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; z-index: 50;
-    }
+    #panel { position: absolute; top: 12px; right: 12px; width: 280px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; z-index: 50; }
     #panel-header { padding: 12px 14px; border-bottom: 1px solid var(--border); }
     #panel-header-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); }
     #panel-feature-name { font-size: 15px; font-weight: 600; margin-top: 2px; }
     #panel-body { padding: 14px; }
     #empty-state { font-size: 13px; color: var(--text-3); line-height: 1.6; text-align: center; padding: 4px 0 8px; }
-
     .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .coord-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; }
     .coord-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); margin-bottom: 3px; }
     .coord-value { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--accent); font-weight: 500; }
-
     #panel-hint { font-size: 12px; color: var(--text-3); margin-top: 12px; display: flex; align-items: flex-start; gap: 6px; line-height: 1.5; }
-
     #status-bar { display: flex; align-items: center; gap: 7px; padding: 9px 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-3); }
     #status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); flex-shrink: 0; transition: background 0.25s; }
     #status-dot.saving { background: var(--warn); animation: blink 0.7s infinite; }
@@ -140,12 +103,7 @@
     #status-dot.error  { background: var(--danger); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-    #hint-toast {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: var(--text); color: white; border-radius: 100px;
-      padding: 9px 18px; font-size: 13px; white-space: nowrap;
-      box-shadow: var(--shadow-lg); z-index: 50; transition: opacity 0.4s;
-    }
+    #hint-toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; border-radius: 100px; padding: 9px 18px; font-size: 13px; white-space: nowrap; box-shadow: var(--shadow-lg); z-index: 50; transition: opacity 0.4s; }
 
     .esri-ui-top-left { top: 12px !important; left: 12px !important; }
     .esri-widget--button, .esri-widget { border-radius: var(--radius-sm) !important; }
@@ -153,18 +111,11 @@
 </head>
 <body>
 
-<!-- Loading -->
-<div id="loading-screen">
-  <div class="spinner"></div>
-  <p>Loading…</p>
-</div>
+<div id="loading-screen"><div class="spinner"></div><p>Loading…</p></div>
 
-<!-- Login -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-    </div>
+    <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
     <h1>Location Editor</h1>
     <p>Sign in with your ArcGIS Online account to continue.</p>
     <button class="btn-login" id="btn-login">Sign in with ArcGIS Online</button>
@@ -172,7 +123,6 @@
   </div>
 </div>
 
-<!-- Error -->
 <div id="error-screen">
   <div class="error-card">
     <div style="font-size:36px">⚠️</div>
@@ -181,25 +131,18 @@
   </div>
 </div>
 
-<!-- App -->
 <div id="app">
   <div id="header">
-    <div class="header-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-    </div>
+    <div class="header-logo"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
     <span id="app-title">Location Editor</span>
-    <div id="layer-select-wrap" class="hidden">
-      <select id="layer-select"></select>
-    </div>
+    <div id="layer-select-wrap" class="hidden"><select id="layer-select"></select></div>
     <div id="user-badge">
       <span id="user-name"></span>
       <button id="btn-signout">Sign out</button>
     </div>
   </div>
-
   <div id="map-wrap">
     <div id="viewDiv"></div>
-
     <div id="panel">
       <div id="panel-header">
         <div id="panel-header-label">Selected feature</div>
@@ -209,48 +152,34 @@
         <div id="empty-state">Click a point on the map to select it</div>
         <div id="point-details" style="display:none">
           <div class="coord-row">
-            <div class="coord-box">
-              <div class="coord-label">Latitude</div>
-              <div class="coord-value" id="detail-lat">—</div>
-            </div>
-            <div class="coord-box">
-              <div class="coord-label">Longitude</div>
-              <div class="coord-value" id="detail-lon">—</div>
-            </div>
+            <div class="coord-box"><div class="coord-label">Latitude</div><div class="coord-value" id="detail-lat">—</div></div>
+            <div class="coord-box"><div class="coord-label">Longitude</div><div class="coord-value" id="detail-lon">—</div></div>
           </div>
-          <div id="panel-hint">
-            <span>↕</span>
-            <span>Drag the selected point to update its location</span>
-          </div>
+          <div id="panel-hint"><span>↕</span><span>Drag the selected point to update its location</span></div>
         </div>
       </div>
-      <div id="status-bar">
-        <div id="status-dot"></div>
-        <span id="status-text">No feature selected</span>
-      </div>
+      <div id="status-bar"><div id="status-dot"></div><span id="status-text">No feature selected</span></div>
     </div>
-
     <div id="hint-toast">👆 Click a point to select it, then drag to move</div>
   </div>
 </div>
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────
-// Client ID is safe to be public — it only identifies the app,
-// not any data. ArcGIS only accepts auth redirects back to the
-// registered domain (bay-park-data-solutions.github.io).
 const CLIENT_ID = "Wd85I6OWMyGPB5L1";
+const DEFAULT_MAP_ID = "531827717dc8409f81a026abc3d01bd6";
 // ─────────────────────────────────────────────────────────────────
 
-// ── URL PARAMS ────────────────────────────────────────────────────
-// Usage:  ?map=WEBMAP_ITEM_ID
-// Optional: &title=My Custom Title
-// ─────────────────────────────────────────────────────────────────
+// URL params:
+//   ?map=WEBMAP_ID      (optional — falls back to DEFAULT_MAP_ID above)
+//   &title=My Title     (optional)
+//   &token=YOUR_TOKEN   (optional — skips login, useful for testing)
 function parseParams() {
   const p = new URLSearchParams(window.location.search);
   return {
-    mapId: p.get("map") || "",
-    title: p.get("title") || "Location Editor"
+    mapId: p.get("map") || DEFAULT_MAP_ID,
+    title: p.get("title") || "Location Editor",
+    token: p.get("token") || ""
   };
 }
 
@@ -279,24 +208,14 @@ require([
   "esri/widgets/ScaleBar"
 ], function(OAuthInfo, IdentityManager, WebMap, MapView, GraphicsLayer, Graphic, Home, ScaleBar) {
 
-  const { mapId, title } = parseParams();
+  const { mapId, title, token } = parseParams();
   document.title = title;
   document.getElementById("app-title").textContent = title;
 
-  // No map ID → error
-  if (!mapId) {
-    showError(
-      "Configuration Error",
-      "No Web Map ID was provided. The iframe src must include a ?map= parameter with the ArcGIS Web Map item ID."
-    );
-    return;
-  }
-
-  // Register OAuth — popup mode so it works inside an iframe
-  // without doing a full page redirect
+  // Register OAuth (popup mode — works inside iframes)
   IdentityManager.registerOAuthInfos([new OAuthInfo({
     appId: CLIENT_ID,
-    popup: true,           // opens a small popup window, not a redirect
+    popup: true,
     popupCallbackUrl: "https://bay-park-data-solutions.github.io/location-editor/oauth-callback.html"
   })]);
 
@@ -319,15 +238,25 @@ require([
     location.reload();
   });
 
-  // Check if already signed in (cached from previous visit)
+  // ── Option 1: token passed in URL (testing / token-based auth) ──
+  if (token) {
+    IdentityManager.registerToken({
+      server: "https://www.arcgis.com/sharing",
+      token: token
+    });
+    document.getElementById("loading-screen").classList.add("hidden");
+    initApp({ userId: "" });
+    return;
+  }
+
+  // ── Option 2: already signed in from a previous session ──
   IdentityManager.checkSignInStatus("https://www.arcgis.com/sharing")
     .then(cred => {
-      // Already signed in — skip login screen entirely
       document.getElementById("loading-screen").classList.add("hidden");
       initApp(cred);
     })
     .catch(() => {
-      // Not signed in — show login screen
+      // ── Option 3: show login screen ──
       document.getElementById("loading-screen").classList.add("hidden");
       document.getElementById("login-screen").classList.add("visible");
     });
@@ -337,22 +266,18 @@ require([
     document.getElementById("user-name").textContent = credential.userId || "";
     document.getElementById("app").classList.add("visible");
 
-    // Load Web Map — all symbology, labels, basemap from ArcGIS Online
     const webmap = new WebMap({ portalItem: { id: mapId } });
-
     const view = new MapView({
       container: "viewDiv",
       map: webmap,
       ui: { components: [] }
     });
-
     view.ui.add(new Home({ view }), "top-left");
     view.ui.add(new ScaleBar({ view, unit: "metric" }), "bottom-left");
 
     const ghostLayer = new GraphicsLayer();
     webmap.add(ghostLayer);
 
-    // State
     let activeLayer     = null;
     let activeLayerView = null;
     let selectedGraphic = null;
@@ -398,7 +323,7 @@ require([
       view.whenLayerView(layer).then(lv => { activeLayerView = lv; });
     }
 
-    // Map loaded — find all point layers
+    // Map loaded — find all editable point layers
     view.when(() => {
       const pointLayers = webmap.layers
         .filter(l => l.type === "feature" && l.geometryType === "point")
@@ -409,7 +334,6 @@ require([
         return;
       }
 
-      // Multiple point layers → show dropdown
       if (pointLayers.length > 1) {
         const selectEl = document.getElementById("layer-select");
         document.getElementById("layer-select-wrap").classList.remove("hidden");
@@ -435,17 +359,11 @@ require([
       const hit = await view.hitTest(evt, { include: activeLayer });
       const res = hit.results[0];
       if (!res) { clearSelection(); return; }
-
       selectedGraphic = res.graphic;
       if (highlightHandle) highlightHandle.remove();
       if (activeLayerView) highlightHandle = activeLayerView.highlight(selectedGraphic);
-
       const nameField = guessNameField(selectedGraphic.attributes);
-      showDetails(
-        selectedGraphic.attributes[nameField],
-        selectedGraphic.geometry.latitude,
-        selectedGraphic.geometry.longitude
-      );
+      showDetails(selectedGraphic.attributes[nameField], selectedGraphic.geometry.latitude, selectedGraphic.geometry.longitude);
       setStatus("", "Ready — drag the point to move it");
       document.getElementById("hint-toast").style.opacity = "0";
     });
@@ -498,7 +416,6 @@ require([
 
     view.on("drag", (e) => { if (capturingDrag) e.stopPropagation(); });
 
-    // Save to feature layer
     async function saveLocation(graphic, newGeom) {
       setStatus("saving", "Saving to database…");
       const oidField = activeLayer.objectIdField || "OBJECTID";
@@ -531,7 +448,6 @@ require([
     }
 
   } // end initApp
-
 }); // end require
 </script>
 </body>
