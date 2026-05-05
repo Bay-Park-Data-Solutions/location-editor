@@ -219,16 +219,55 @@ require([
     popupCallbackUrl: "https://bay-park-data-solutions.github.io/location-editor/oauth-callback.html"
   })]);
 
+  // Poll localStorage for OAuth token (Safari blocks window.opener)
+  let oauthPollInterval = null;
+  function startOAuthPoll() {
+    oauthPollInterval = setInterval(function() {
+      try {
+        const hash = localStorage.getItem("esri_oauth_hash");
+        const ts   = parseInt(localStorage.getItem("esri_oauth_ts") || "0");
+        if (hash && (Date.now() - ts) < 30000) {
+          localStorage.removeItem("esri_oauth_hash");
+          localStorage.removeItem("esri_oauth_ts");
+          clearInterval(oauthPollInterval);
+          oauthPollInterval = null;
+          IdentityManager.setOAuthResponseHash(hash);
+          IdentityManager.checkSignInStatus("https://www.arcgis.com/sharing")
+            .then(cred => {
+              document.getElementById("login-screen").classList.remove("visible");
+              initApp(cred);
+            }).catch(e => console.error("Poll login failed:", e));
+        }
+      } catch(e) {}
+    }, 500);
+  }
+
   // Sign in button
   document.getElementById("btn-login").addEventListener("click", () => {
+    startOAuthPoll();
     IdentityManager.getCredential("https://www.arcgis.com/sharing")
       .then(cred => {
+        if (oauthPollInterval) { clearInterval(oauthPollInterval); oauthPollInterval = null; }
         document.getElementById("login-screen").classList.remove("visible");
         initApp(cred);
       })
       .catch(err => {
-        console.error("Login failed:", err);
-        showError("Sign in failed", "Could not complete sign in. Please try again.");
+        if (err.name === "identity-manager:user-aborted") {
+          // Safari blocks window.opener — wait for localStorage poll to pick up the token
+          setTimeout(function() {
+            if (oauthPollInterval) {
+              clearInterval(oauthPollInterval);
+              oauthPollInterval = null;
+              if (document.getElementById("login-screen").classList.contains("visible")) {
+                showError("Sign in failed", "Could not complete sign in. Please try again.");
+              }
+            }
+          }, 6000);
+        } else {
+          if (oauthPollInterval) { clearInterval(oauthPollInterval); oauthPollInterval = null; }
+          console.error("Login failed:", err);
+          showError("Sign in failed", "Could not complete sign in. Please try again.");
+        }
       });
   });
 

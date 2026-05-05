@@ -8,9 +8,36 @@
 <body>
   <script>
     require(["esri/identity/IdentityManager"], function(IdentityManager) {
-      // Let the SDK fully process the hash — do NOT close manually.
-      // The SDK will call window.close() itself once it's done.
-      IdentityManager.setOAuthResponseHash(location.hash || location.search);
+      try {
+        // Standard approach
+        IdentityManager.setOAuthResponseHash(location.hash || location.search);
+      } catch(e) {
+        console.warn("setOAuthResponseHash failed:", e);
+      }
+
+      // Store the hash in localStorage so the main window can pick it up
+      // even if window.opener is blocked by the browser
+      try {
+        localStorage.setItem("esri_oauth_hash", location.hash || location.search);
+        localStorage.setItem("esri_oauth_ts", Date.now().toString());
+      } catch(e) {
+        console.warn("localStorage failed:", e);
+      }
+
+      // Try to notify opener via postMessage
+      try {
+        if (window.opener) {
+          window.opener.postMessage(
+            { type: "oauth-callback", hash: location.hash, search: location.search },
+            "https://bay-park-data-solutions.github.io"
+          );
+        }
+      } catch(e) {
+        console.warn("postMessage failed:", e);
+      }
+
+      // Close after a short delay
+      setTimeout(function() { window.close(); }, 2000);
     });
   </script>
 </body>
