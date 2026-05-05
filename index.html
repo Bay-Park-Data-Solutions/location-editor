@@ -323,11 +323,11 @@ require([
       view.whenLayerView(layer).then(lv => { activeLayerView = lv; });
     }
 
-    // Map loaded — find all editable point layers
-    view.when(() => {
-      const pointLayers = webmap.layers
-        .filter(l => l.type === "feature" && l.geometryType === "point")
-        .toArray();
+    // Map loaded — wait for all layers to fully load, then find point layers
+    view.when(async () => {
+      const allLayers = webmap.layers.toArray();
+      await Promise.all(allLayers.map(l => l.load().catch(() => {})));
+      const pointLayers = allLayers.filter(l => l.type === "feature" && l.geometryType === "point");
 
       if (!pointLayers.length) {
         showError("No point layers found", "This web map doesn't contain any point feature layers that can be edited.");
