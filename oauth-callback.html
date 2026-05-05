@@ -12,6 +12,9 @@
         IdentityManager.setOAuthResponseHash(location.hash || location.search);
       } catch(e) {
         console.error("OAuth callback error:", e);
+      } finally {
+        // Force close the popup after a short delay as fallback
+        setTimeout(function() { window.close(); }, 500);
       }
     });
   </script>
