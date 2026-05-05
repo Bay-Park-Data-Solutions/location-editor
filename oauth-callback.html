@@ -7,22 +7,10 @@
 </head>
 <body>
   <script>
-    // Try the standard ArcGIS SDK approach first
     require(["esri/identity/IdentityManager"], function(IdentityManager) {
-      try {
-        IdentityManager.setOAuthResponseHash(location.hash || location.search);
-      } catch(e) {
-        console.warn("SDK approach failed, trying manual:", e);
-        // Fallback: manually send token back to opener via postMessage
-        if (window.opener) {
-          window.opener.postMessage(
-            { type: "oauth-callback", hash: location.hash, search: location.search },
-            "https://bay-park-data-solutions.github.io"
-          );
-        }
-      } finally {
-        setTimeout(function() { window.close(); }, 1000);
-      }
+      // Let the SDK fully process the hash — do NOT close manually.
+      // The SDK will call window.close() itself once it's done.
+      IdentityManager.setOAuthResponseHash(location.hash || location.search);
     });
   </script>
 </body>
