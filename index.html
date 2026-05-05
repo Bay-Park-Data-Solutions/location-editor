@@ -19,6 +19,7 @@
       --border:    #e2e5ea;
       --border2:   #cdd1d9;
       --accent:    #0070f3;
+      --accent-dk: #0058c4;
       --success:   #16a34a;
       --warn:      #d97706;
       --danger:    #dc2626;
@@ -44,8 +45,34 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading-screen p { font-size: 14px; color: var(--text-3); }
 
-    /* ── ERROR ── */
-    #error-screen { position: fixed; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 300; }
+    /* ── LOGIN SCREEN ── */
+    #login-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: none; align-items: center; justify-content: center; z-index: 200;
+    }
+    #login-screen.visible { display: flex; }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px 48px; width: 360px; max-width: 90vw;
+      box-shadow: var(--shadow-lg); display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+    .login-logo { width: 48px; height: 48px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .login-logo svg { width: 26px; height: 26px; fill: white; }
+    .login-card h1 { font-size: 20px; font-weight: 600; text-align: center; }
+    .login-card p { font-size: 14px; color: var(--text-2); text-align: center; line-height: 1.5; }
+    .btn-login {
+      width: 100%; padding: 12px; background: var(--accent); color: white;
+      border: none; border-radius: var(--radius); font-size: 15px; font-weight: 500;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .btn-login:hover { background: var(--accent-dk); }
+    .login-note { font-size: 12px; color: var(--text-3); text-align: center; }
+
+    /* ── ERROR SCREEN ── */
+    #error-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: none; align-items: center; justify-content: center; z-index: 300;
+    }
     #error-screen.visible { display: flex; }
     .error-card {
       background: var(--surface); border: 1px solid var(--border);
@@ -69,7 +96,6 @@
     .header-logo svg { width: 16px; height: 16px; fill: white; }
     #app-title { font-size: 14px; font-weight: 600; white-space: nowrap; }
 
-    /* Layer picker — only shown for multi-layer maps */
     #layer-select-wrap { margin-left: 8px; }
     #layer-select-wrap.hidden { display: none; }
     #layer-select {
@@ -79,8 +105,10 @@
     }
     #layer-select:focus { border-color: var(--accent); }
 
-    #user-badge { margin-left: auto; }
+    #user-badge { margin-left: auto; display: flex; align-items: center; gap: 8px; }
     #user-name { font-size: 13px; color: var(--text-2); }
+    #btn-signout { font-size: 12px; color: var(--text-3); background: none; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    #btn-signout:hover { border-color: var(--border2); color: var(--text-2); }
 
     /* Map */
     #map-wrap { flex: 1; position: relative; }
@@ -128,7 +156,20 @@
 <!-- Loading -->
 <div id="loading-screen">
   <div class="spinner"></div>
-  <p>Loading your map…</p>
+  <p>Loading…</p>
+</div>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    </div>
+    <h1>Location Editor</h1>
+    <p>Sign in with your ArcGIS Online account to continue.</p>
+    <button class="btn-login" id="btn-login">Sign in with ArcGIS Online</button>
+    <span class="login-note">After signing in once, you won't be asked again.</span>
+  </div>
 </div>
 
 <!-- Error -->
@@ -152,6 +193,7 @@
     </div>
     <div id="user-badge">
       <span id="user-name"></span>
+      <button id="btn-signout">Sign out</button>
     </div>
   </div>
 
@@ -193,11 +235,17 @@
 </div>
 
 <script>
-// ── URL PARAMS ────────────────────────────────────────────────────
-// Single web map:   ?map=WEBMAP_ITEM_ID
-// Custom title:     ?map=WEBMAP_ITEM_ID&title=My Map
+// ── CONFIG ────────────────────────────────────────────────────────
+// Client ID is safe to be public — it only identifies the app,
+// not any data. ArcGIS only accepts auth redirects back to the
+// registered domain (bay-park-data-solutions.github.io).
+const CLIENT_ID = "Wd85I6OWMyGPB5L1";
 // ─────────────────────────────────────────────────────────────────
 
+// ── URL PARAMS ────────────────────────────────────────────────────
+// Usage:  ?map=WEBMAP_ITEM_ID
+// Optional: &title=My Custom Title
+// ─────────────────────────────────────────────────────────────────
 function parseParams() {
   const p = new URLSearchParams(window.location.search);
   return {
@@ -214,12 +262,14 @@ function guessNameField(attrs) {
 
 function showError(title, msg) {
   document.getElementById("loading-screen").classList.add("hidden");
+  document.getElementById("login-screen").classList.remove("visible");
   document.getElementById("error-title").textContent = title;
   document.getElementById("error-msg").textContent = msg;
   document.getElementById("error-screen").classList.add("visible");
 }
 
 require([
+  "esri/identity/OAuthInfo",
   "esri/identity/IdentityManager",
   "esri/WebMap",
   "esri/views/MapView",
@@ -227,13 +277,13 @@ require([
   "esri/Graphic",
   "esri/widgets/Home",
   "esri/widgets/ScaleBar"
-], function(IdentityManager, WebMap, MapView, GraphicsLayer, Graphic, Home, ScaleBar) {
+], function(OAuthInfo, IdentityManager, WebMap, MapView, GraphicsLayer, Graphic, Home, ScaleBar) {
 
   const { mapId, title } = parseParams();
   document.title = title;
   document.getElementById("app-title").textContent = title;
 
-  // No map ID → show error
+  // No map ID → error
   if (!mapId) {
     showError(
       "Configuration Error",
@@ -242,22 +292,52 @@ require([
     return;
   }
 
-  // Pick up the existing ArcGIS Online session silently
+  // Register OAuth — popup mode so it works inside an iframe
+  // without doing a full page redirect
+  IdentityManager.registerOAuthInfos([new OAuthInfo({
+    appId: CLIENT_ID,
+    popup: true,           // opens a small popup window, not a redirect
+    popupCallbackUrl: "https://bay-park-data-solutions.github.io/location-editor/oauth-callback.html"
+  })]);
+
+  // Sign in button
+  document.getElementById("btn-login").addEventListener("click", () => {
+    IdentityManager.getCredential("https://www.arcgis.com/sharing")
+      .then(cred => {
+        document.getElementById("login-screen").classList.remove("visible");
+        initApp(cred);
+      })
+      .catch(err => {
+        console.error("Login failed:", err);
+        showError("Sign in failed", "Could not complete sign in. Please try again.");
+      });
+  });
+
+  // Sign out
+  document.getElementById("btn-signout").addEventListener("click", () => {
+    IdentityManager.destroyCredentials();
+    location.reload();
+  });
+
+  // Check if already signed in (cached from previous visit)
   IdentityManager.checkSignInStatus("https://www.arcgis.com/sharing")
-    .then(cred => initApp(cred))
+    .then(cred => {
+      // Already signed in — skip login screen entirely
+      document.getElementById("loading-screen").classList.add("hidden");
+      initApp(cred);
+    })
     .catch(() => {
-      showError(
-        "Session not found",
-        "Please open this app from your ArcGIS Online Experience Builder page. You need to be signed into ArcGIS Online first."
-      );
+      // Not signed in — show login screen
+      document.getElementById("loading-screen").classList.add("hidden");
+      document.getElementById("login-screen").classList.add("visible");
     });
 
-  // ── Init ──────────────────────────────────────────────────────
+  // ── Init app ──────────────────────────────────────────────────
   function initApp(credential) {
-
     document.getElementById("user-name").textContent = credential.userId || "";
+    document.getElementById("app").classList.add("visible");
 
-    // Load the Web Map — this brings in all layers, symbology, labels, basemap
+    // Load Web Map — all symbology, labels, basemap from ArcGIS Online
     const webmap = new WebMap({ portalItem: { id: mapId } });
 
     const view = new MapView({
@@ -273,13 +353,12 @@ require([
     webmap.add(ghostLayer);
 
     // State
-    let editableLayers    = [];   // all point FeatureLayers found in the map
-    let activeLayer       = null;
-    let activeLayerView   = null;
-    let selectedGraphic   = null;
-    let highlightHandle   = null;
-    let capturingDrag     = false;
-    let hasMoved          = false;
+    let activeLayer     = null;
+    let activeLayerView = null;
+    let selectedGraphic = null;
+    let highlightHandle = null;
+    let capturingDrag   = false;
+    let hasMoved        = false;
 
     function setStatus(cls, txt) {
       document.getElementById("status-dot").className = cls;
@@ -312,47 +391,43 @@ require([
       }));
     }
 
-    // Once the map loads, find all editable point layers
-    view.when(() => {
-      document.getElementById("loading-screen").classList.add("hidden");
-      document.getElementById("app").classList.add("visible");
-
-      // Collect all point FeatureLayers from the web map
-      editableLayers = webmap.layers.filter(l =>
-        l.type === "feature" && l.geometryType === "point"
-      ).toArray();
-
-      if (!editableLayers.length) {
-        showError("No point layers found", "This web map doesn't contain any point feature layers that can be edited.");
-        return;
-      }
-
-      // If multiple point layers → show dropdown so user can pick which to edit
-      if (editableLayers.length > 1) {
-        const selectEl = document.getElementById("layer-select");
-        document.getElementById("layer-select-wrap").classList.remove("hidden");
-        editableLayers.forEach((l, i) => {
-          const opt = document.createElement("option");
-          opt.value = i;
-          opt.textContent = l.title || `Layer ${i + 1}`;
-          selectEl.appendChild(opt);
-        });
-        selectEl.addEventListener("change", () => setActiveLayer(editableLayers[+selectEl.value]));
-      }
-
-      setActiveLayer(editableLayers[0]);
-
-    }).catch(err => {
-      console.error(err);
-      showError("Map failed to load", "Could not load the web map. Make sure the Map ID is correct and you have access to it.");
-    });
-
     function setActiveLayer(layer) {
       clearSelection();
       activeLayer = layer;
       activeLayerView = null;
       view.whenLayerView(layer).then(lv => { activeLayerView = lv; });
     }
+
+    // Map loaded — find all point layers
+    view.when(() => {
+      const pointLayers = webmap.layers
+        .filter(l => l.type === "feature" && l.geometryType === "point")
+        .toArray();
+
+      if (!pointLayers.length) {
+        showError("No point layers found", "This web map doesn't contain any point feature layers that can be edited.");
+        return;
+      }
+
+      // Multiple point layers → show dropdown
+      if (pointLayers.length > 1) {
+        const selectEl = document.getElementById("layer-select");
+        document.getElementById("layer-select-wrap").classList.remove("hidden");
+        pointLayers.forEach((l, i) => {
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.textContent = l.title || `Layer ${i + 1}`;
+          selectEl.appendChild(opt);
+        });
+        selectEl.addEventListener("change", () => setActiveLayer(pointLayers[+selectEl.value]));
+      }
+
+      setActiveLayer(pointLayers[0]);
+
+    }).catch(err => {
+      console.error(err);
+      showError("Map failed to load", "Could not load the web map. Check that the Map ID is correct and you have access to it.");
+    });
 
     // Click → select
     view.on("click", async (evt) => {
@@ -423,7 +498,7 @@ require([
 
     view.on("drag", (e) => { if (capturingDrag) e.stopPropagation(); });
 
-    // Save
+    // Save to feature layer
     async function saveLocation(graphic, newGeom) {
       setStatus("saving", "Saving to database…");
       const oidField = activeLayer.objectIdField || "OBJECTID";

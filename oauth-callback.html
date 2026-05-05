@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Authenticating…</title>
+  <script src="https://js.arcgis.com/4.29/"></script>
+</head>
+<body>
+  <script>
+    // This page is opened as a popup by the ArcGIS JS SDK during OAuth.
+    // It handles the token response and closes itself automatically.
+    require(["esri/identity/IdentityManager"], function(IdentityManager) {
+      IdentityManager.setOAuthResponseHash(location.hash);
+    });
+  </script>
+</body>
+</html>
