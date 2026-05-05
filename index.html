@@ -179,7 +179,8 @@ function parseParams() {
   return {
     mapId: p.get("map") || DEFAULT_MAP_ID,
     title: p.get("title") || "Location Editor",
-    token: p.get("token") || ""
+    token: p.get("token") || "",
+    org:   p.get("org")   || ""   // e.g. "bayparkds" from bayparkds.maps.arcgis.com
   };
 }
 
@@ -208,20 +209,27 @@ require([
   "esri/widgets/ScaleBar"
 ], function(OAuthInfo, IdentityManager, WebMap, MapView, GraphicsLayer, Graphic, Home, ScaleBar) {
 
-  const { mapId, title, token } = parseParams();
+  const { mapId, title, token, org } = parseParams();
   document.title = title;
   document.getElementById("app-title").textContent = title;
 
-  // Register OAuth (popup mode — works inside iframes)
+  // Build the portal sharing URL — use org-specific URL if provided
+  // This allows checkSignInStatus to find the existing ArcGIS session cookie
+  const portalUrl = org
+    ? "https://" + org + ".maps.arcgis.com/sharing"
+    : "https://www.arcgis.com/sharing";
+
+  // Register OAuth (popup mode)
   IdentityManager.registerOAuthInfos([new OAuthInfo({
     appId: CLIENT_ID,
+    portalUrl: portalUrl.replace("/sharing", ""),
     popup: true,
     popupCallbackUrl: "https://bay-park-data-solutions.github.io/location-editor/oauth-callback.html"
   })]);
 
   // Sign in button
   document.getElementById("btn-login").addEventListener("click", () => {
-    IdentityManager.getCredential("https://www.arcgis.com/sharing")
+    IdentityManager.getCredential(portalUrl)
       .then(cred => {
         document.getElementById("login-screen").classList.remove("visible");
         initApp(cred);
@@ -238,28 +246,35 @@ require([
     location.reload();
   });
 
-  // ── Option 1: token passed in URL (testing / token-based auth) ──
+  // ── Option 1: token passed in URL (testing) ──
   if (token) {
-    IdentityManager.registerToken({
-      server: "https://www.arcgis.com/sharing",
-      token: token
-    });
+    IdentityManager.registerToken({ server: portalUrl, token: token });
     document.getElementById("loading-screen").classList.add("hidden");
     initApp({ userId: "" });
     return;
   }
 
-  // ── Option 2: already signed in from a previous session ──
-  IdentityManager.checkSignInStatus("https://www.arcgis.com/sharing")
-    .then(cred => {
-      document.getElementById("loading-screen").classList.add("hidden");
-      initApp(cred);
-    })
-    .catch(() => {
-      // ── Option 3: show login screen ──
+  // ── Option 2: pick up existing ArcGIS session (user already logged in) ──
+  // Try org-specific URL first, then fall back to www.arcgis.com
+  const urlsToCheck = org
+    ? [portalUrl, "https://www.arcgis.com/sharing"]
+    : ["https://www.arcgis.com/sharing"];
+
+  function checkNextUrl(urls, index) {
+    if (index >= urls.length) {
       document.getElementById("loading-screen").classList.add("hidden");
       document.getElementById("login-screen").classList.add("visible");
-    });
+      return;
+    }
+    IdentityManager.checkSignInStatus(urls[index])
+      .then(cred => {
+        document.getElementById("loading-screen").classList.add("hidden");
+        initApp(cred);
+      })
+      .catch(() => checkNextUrl(urls, index + 1));
+  }
+
+  checkNextUrl(urlsToCheck, 0);
 
   // ── Init app ──────────────────────────────────────────────────
   function initApp(credential) {
