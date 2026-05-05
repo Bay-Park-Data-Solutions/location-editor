@@ -7,10 +7,12 @@
 </head>
 <body>
   <script>
-    // This page is opened as a popup by the ArcGIS JS SDK during OAuth.
-    // It handles the token response and closes itself automatically.
     require(["esri/identity/IdentityManager"], function(IdentityManager) {
-      IdentityManager.setOAuthResponseHash(location.hash);
+      try {
+        IdentityManager.setOAuthResponseHash(location.hash || location.search);
+      } catch(e) {
+        console.error("OAuth callback error:", e);
+      }
     });
   </script>
 </body>
