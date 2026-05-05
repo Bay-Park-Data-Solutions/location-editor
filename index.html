@@ -215,7 +215,8 @@ require([
   // Register OAuth (popup mode — works inside iframes)
   IdentityManager.registerOAuthInfos([new OAuthInfo({
     appId: CLIENT_ID,
-    popup: false
+    popup: true,
+    popupCallbackUrl: "https://bay-park-data-solutions.github.io/location-editor/oauth-callback.html"
   })]);
 
   // Sign in button
