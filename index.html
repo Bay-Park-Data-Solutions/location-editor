@@ -350,11 +350,13 @@ require([
 
       var attrs = {};
       attrs[oidField] = oid;
-      // Always update coordinate fields — cover all common naming conventions
-      attrs.Latitude  = parseFloat(newGeom.latitude.toFixed(6));
-      attrs.Longitude = parseFloat(newGeom.longitude.toFixed(6));
-      attrs.latitude  = parseFloat(newGeom.latitude.toFixed(6));
-      attrs.longitude = parseFloat(newGeom.longitude.toFixed(6));
+
+      // Only update coordinate fields if they exist in the layer schema
+      var fields = activeLayer.fields.map(function(f) { return f.name; });
+      if (fields.indexOf("Latitude")  > -1) attrs.Latitude  = parseFloat(newGeom.latitude.toFixed(6));
+      if (fields.indexOf("Longitude") > -1) attrs.Longitude = parseFloat(newGeom.longitude.toFixed(6));
+      if (fields.indexOf("latitude")  > -1) attrs.latitude  = parseFloat(newGeom.latitude.toFixed(6));
+      if (fields.indexOf("longitude") > -1) attrs.longitude = parseFloat(newGeom.longitude.toFixed(6));
 
       var updated = {
         attributes: attrs,
