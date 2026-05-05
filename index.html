@@ -62,6 +62,21 @@
     #status-dot.saved  { background: var(--success); }
     #status-dot.error  { background: var(--danger); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .coord-input {
+      width: 100%; background: none; border: none; outline: none;
+      font-size: 13px; font-family: 'JetBrains Mono', monospace;
+      color: var(--accent); font-weight: 500; padding: 0;
+      cursor: text;
+    }
+    .coord-input:focus { color: var(--accent-dk); }
+    #btn-update-coords {
+      width: 100%; margin-top: 10px; padding: 9px;
+      background: var(--accent); color: white; border: none;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    #btn-update-coords:hover { background: var(--accent-dk); }
+    #btn-update-coords:disabled { background: var(--border2); cursor: not-allowed; }
     #hint-toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; border-radius: 100px; padding: 9px 18px; font-size: 13px; white-space: nowrap; box-shadow: var(--shadow-lg); z-index: 50; transition: opacity 0.4s; }
     .esri-ui-top-left { top: 12px !important; left: 12px !important; }
     .esri-widget--button, .esri-widget { border-radius: var(--radius-sm) !important; }
@@ -101,10 +116,17 @@
         <div id="empty-state">Click a point on the map to select it</div>
         <div id="point-details" style="display:none">
           <div class="coord-row">
-            <div class="coord-box"><div class="coord-label">Latitude</div><div class="coord-value" id="detail-lat">—</div></div>
-            <div class="coord-box"><div class="coord-label">Longitude</div><div class="coord-value" id="detail-lon">—</div></div>
+            <div class="coord-box">
+              <div class="coord-label">Latitude</div>
+              <input class="coord-input" id="detail-lat" type="number" step="any" placeholder="0.000000"/>
+            </div>
+            <div class="coord-box">
+              <div class="coord-label">Longitude</div>
+              <input class="coord-input" id="detail-lon" type="number" step="any" placeholder="0.000000"/>
+            </div>
           </div>
-          <div id="panel-hint"><span>↕</span><span>Drag the selected point to update its location</span></div>
+          <button id="btn-update-coords">Update Location</button>
+          <div id="panel-hint"><span>↕</span><span>Or drag the point directly on the map</span></div>
         </div>
       </div>
       <div id="status-bar"><div id="status-dot"></div><span id="status-text">No feature selected</span></div>
@@ -222,8 +244,8 @@ require([
       document.getElementById("panel-feature-name").textContent = name || "Unnamed";
       document.getElementById("empty-state").style.display = "none";
       document.getElementById("point-details").style.display = "block";
-      document.getElementById("detail-lat").textContent = lat.toFixed(6);
-      document.getElementById("detail-lon").textContent = lon.toFixed(6);
+      document.getElementById("detail-lat").value = lat.toFixed(6);
+      document.getElementById("detail-lon").value = lon.toFixed(6);
     }
 
     function clearSelection() {
@@ -236,6 +258,36 @@ require([
       setStatus("", "No feature selected");
     }
 
+    // Manual coordinate update button
+    document.getElementById("btn-update-coords").addEventListener("click", function() {
+      if (!selectedGraphic || !activeLayer) return;
+      var lat = parseFloat(document.getElementById("detail-lat").value);
+      var lon = parseFloat(document.getElementById("detail-lon").value);
+      if (isNaN(lat) || isNaN(lon)) {
+        setStatus("error", "Invalid coordinates — check values");
+        return;
+      }
+      if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        setStatus("error", "Coordinates out of range");
+        return;
+      }
+      var newGeom = { latitude: lat, longitude: lon };
+      // Move ghost to new position
+      require(["esri/geometry/Point"], function(Point) {
+        var pt = new Point({ latitude: lat, longitude: lon });
+        ghostAt(pt);
+        saveLocation(selectedGraphic, newGeom);
+      });
+    });
+
+    // Allow pressing Enter in coordinate fields to trigger update
+    document.getElementById("detail-lat").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") document.getElementById("btn-update-coords").click();
+    });
+    document.getElementById("detail-lon").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") document.getElementById("btn-update-coords").click();
+    });
+
     function ghostAt(mapPoint) {
       ghostLayer.removeAll();
       ghostLayer.add(new Graphic({
@@ -244,8 +296,12 @@ require([
       }));
     }
 
-    function setActiveLayer(layer) {
+    function setActiveLayer(layer, allLayers) {
       clearSelection();
+      // Hide all point layers except the selected one
+      if (allLayers) {
+        allLayers.forEach(function(l) { l.visible = (l === layer); });
+      }
       activeLayer = layer;
       activeLayerView = null;
       view.whenLayerView(layer).then(function(lv) { activeLayerView = lv; });
@@ -271,10 +327,10 @@ require([
               opt.textContent = l.title || ("Layer " + (i + 1));
               selectEl.appendChild(opt);
             });
-            selectEl.addEventListener("change", function() { setActiveLayer(pointLayers[+selectEl.value]); });
+            selectEl.addEventListener("change", function() { setActiveLayer(pointLayers[+selectEl.value], pointLayers); });
           }
 
-          setActiveLayer(pointLayers[0]);
+          setActiveLayer(pointLayers[0], pointLayers);
         });
     }).catch(function(err) {
       console.error(err);
@@ -358,9 +414,13 @@ require([
       if (fields.indexOf("latitude")  > -1) attrs.latitude  = parseFloat(newGeom.latitude.toFixed(6));
       if (fields.indexOf("longitude") > -1) attrs.longitude = parseFloat(newGeom.longitude.toFixed(6));
 
+      // newGeom can be an ArcGIS Point object or a plain {latitude, longitude} object
+      var lat = typeof newGeom.latitude  === "function" ? newGeom.latitude  : newGeom.latitude;
+      var lon = typeof newGeom.longitude === "function" ? newGeom.longitude : newGeom.longitude;
+
       var updated = {
         attributes: attrs,
-        geometry: { type: "point", x: newGeom.longitude, y: newGeom.latitude, spatialReference: { wkid: 4326 } }
+        geometry: { type: "point", x: lon, y: lat, spatialReference: { wkid: 4326 } }
       };
 
       try {
