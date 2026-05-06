@@ -143,16 +143,39 @@ var DEFAULT_MAP_ID = "531827717dc8409f81a026abc3d01bd6";
 function parseParams() {
   var p = new URLSearchParams(window.location.search);
   return {
-    mapId: p.get("map")   || DEFAULT_MAP_ID,
-    title: p.get("title") || "Location Editor",
-    org:   p.get("org")   || ""
+    mapId:    p.get("map")      || DEFAULT_MAP_ID,
+    title:    p.get("title")    || "Location Editor",
+    org:      p.get("org")      || "",
+    nameField: p.get("namefield") || "",   // e.g. ?namefield=WELL_NAME
+    latField:  p.get("latfield")  || "",   // e.g. ?latfield=LATITUDE__N_
+    lonField:  p.get("lonfield")  || ""    // e.g. ?lonfield=LONGITUDE__E_
   };
 }
 
+// nameFieldOverride is set from ?namefield= URL param
+var nameFieldOverride = "";
+var latFieldOverride  = "";
+var lonFieldOverride  = "";
+
 function guessNameField(attrs) {
-  var candidates = ["Name","name","NAME","Title","title","TITLE","Label","label"];
+  if (nameFieldOverride && nameFieldOverride in attrs) return nameFieldOverride;
+  var candidates = ["Name","name","NAME","Title","title","TITLE","Label","label","WELL_NAME","well_name"];
   for (var i = 0; i < candidates.length; i++) { if (candidates[i] in attrs) return candidates[i]; }
   return Object.keys(attrs)[0] || "";
+}
+
+function getLatField(fields) {
+  if (latFieldOverride && fields.indexOf(latFieldOverride) > -1) return latFieldOverride;
+  var candidates = ["Latitude","latitude","LATITUDE","LATITUDE__N_","lat","LAT"];
+  for (var i = 0; i < candidates.length; i++) { if (fields.indexOf(candidates[i]) > -1) return candidates[i]; }
+  return null;
+}
+
+function getLonField(fields) {
+  if (lonFieldOverride && fields.indexOf(lonFieldOverride) > -1) return lonFieldOverride;
+  var candidates = ["Longitude","longitude","LONGITUDE","LONGITUDE__E_","lon","LON"];
+  for (var i = 0; i < candidates.length; i++) { if (fields.indexOf(candidates[i]) > -1) return candidates[i]; }
+  return null;
 }
 
 function showError(title, msg) {
@@ -177,6 +200,9 @@ require([
   var mapId  = params.mapId;
   var title  = params.title;
   var org    = params.org;
+  nameFieldOverride = params.nameField;
+  latFieldOverride  = params.latField;
+  lonFieldOverride  = params.lonField;
 
   document.title = title;
   document.getElementById("app-title").textContent = title;
@@ -200,6 +226,11 @@ require([
     location.href = url;
   });
 
+  // Clean up the OAuth hash from the URL after redirect without triggering a reload
+  if (window.location.hash) {
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+
   // Check if already signed in, otherwise trigger redirect login
   IdentityManager.checkSignInStatus(portalSharing)
     .then(function(cred) {
@@ -220,7 +251,12 @@ require([
     document.getElementById("app").classList.add("visible");
     document.getElementById("loading-screen").classList.add("hidden");
 
-    var webmap = new WebMap({ portalItem: { id: mapId } });
+    var webmap = new WebMap({
+      portalItem: {
+        id: mapId,
+        portal: { url: portalBase }
+      }
+    });
     var view = new MapView({ container: "viewDiv", map: webmap, ui: { components: [] } });
     view.ui.add(new Home({ view: view }), "top-left");
     view.ui.add(new ScaleBar({ view: view, unit: "metric" }), "bottom-left");
@@ -409,10 +445,10 @@ require([
 
       // Only update coordinate fields if they exist in the layer schema
       var fields = activeLayer.fields.map(function(f) { return f.name; });
-      if (fields.indexOf("Latitude")  > -1) attrs.Latitude  = parseFloat(newGeom.latitude.toFixed(6));
-      if (fields.indexOf("Longitude") > -1) attrs.Longitude = parseFloat(newGeom.longitude.toFixed(6));
-      if (fields.indexOf("latitude")  > -1) attrs.latitude  = parseFloat(newGeom.latitude.toFixed(6));
-      if (fields.indexOf("longitude") > -1) attrs.longitude = parseFloat(newGeom.longitude.toFixed(6));
+      var latF = getLatField(fields);
+      var lonF = getLonField(fields);
+      if (latF) attrs[latF] = parseFloat(lat.toFixed(6));
+      if (lonF) attrs[lonF] = parseFloat(lon.toFixed(6));
 
       // newGeom can be an ArcGIS Point object or a plain {latitude, longitude} object
       var lat = typeof newGeom.latitude  === "function" ? newGeom.latitude  : newGeom.latitude;
