@@ -477,15 +477,15 @@ require([
       attrs[oidField] = oid;
 
       // Only update coordinate fields if they exist in the layer schema
+      // newGeom can be an ArcGIS Point object or a plain {latitude, longitude} object
+      var lat = newGeom.latitude;
+      var lon = newGeom.longitude;
+
       var fields = activeLayer.fields.map(function(f) { return f.name; });
       var latF = getLatField(fields);
       var lonF = getLonField(fields);
       if (latF) attrs[latF] = parseFloat(lat.toFixed(6));
       if (lonF) attrs[lonF] = parseFloat(lon.toFixed(6));
-
-      // newGeom can be an ArcGIS Point object or a plain {latitude, longitude} object
-      var lat = newGeom.latitude;
-      var lon = newGeom.longitude;
 
       var updated = {
         attributes: attrs,
