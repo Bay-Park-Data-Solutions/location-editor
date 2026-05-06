@@ -158,10 +158,24 @@ var latFieldOverride  = "";
 var lonFieldOverride  = "";
 
 function guessNameField(attrs) {
-  if (nameFieldOverride && nameFieldOverride in attrs) return nameFieldOverride;
+  // If override is set, use it regardless of case
+  if (nameFieldOverride) {
+    // exact match
+    if (nameFieldOverride in attrs) return nameFieldOverride;
+    // case-insensitive match
+    var keys = Object.keys(attrs);
+    for (var k = 0; k < keys.length; k++) {
+      if (keys[k].toLowerCase() === nameFieldOverride.toLowerCase()) return keys[k];
+    }
+  }
   var candidates = ["Name","name","NAME","Title","title","TITLE","Label","label","WELL_NAME","well_name"];
   for (var i = 0; i < candidates.length; i++) { if (candidates[i] in attrs) return candidates[i]; }
-  return Object.keys(attrs)[0] || "";
+  // Last resort: first non-system field
+  var allKeys = Object.keys(attrs);
+  for (var j = 0; j < allKeys.length; j++) {
+    if (allKeys[j] !== "OBJECTID" && allKeys[j] !== "objectid" && allKeys[j] !== "GlobalID") return allKeys[j];
+  }
+  return allKeys[0] || "";
 }
 
 function getLatField(fields) {
@@ -371,6 +385,8 @@ require([
       if (allLayers) {
         allLayers.forEach(function(l) { l.visible = (l === layer); });
       }
+      // Force load all fields so all attributes are available on click
+      layer.outFields = ["*"];
       activeLayer = layer;
       activeLayerView = null;
       view.whenLayerView(layer).then(function(lv) { activeLayerView = lv; });
