@@ -226,7 +226,40 @@ require([
     location.href = url;
   });
 
-  // Clean up the OAuth hash from the URL after redirect without triggering a reload
+  // Before OAuth redirect, save all URL params to sessionStorage so they
+  // survive the round trip back from ArcGIS login
+  if (window.location.search && !window.location.hash) {
+    sessionStorage.setItem("esri_app_params", window.location.search);
+  }
+
+  // After OAuth redirect back, restore params from sessionStorage if URL only has hash
+  if (window.location.hash && !window.location.search) {
+    var savedParams = sessionStorage.getItem("esri_app_params");
+    if (savedParams) {
+      history.replaceState(null, "", window.location.pathname + savedParams);
+      // Re-parse params with restored search string
+      var restoredP = new URLSearchParams(savedParams);
+      mapId         = restoredP.get("map")       || DEFAULT_MAP_ID;
+      title         = restoredP.get("title")      || "Location Editor";
+      org           = restoredP.get("org")        || "";
+      nameFieldOverride = restoredP.get("namefield") || "";
+      latFieldOverride  = restoredP.get("latfield")  || "";
+      lonFieldOverride  = restoredP.get("lonfield")  || "";
+      document.title = title;
+      document.getElementById("app-title").textContent = title;
+      // Rebuild portal URLs with restored org
+      portalBase    = org ? "https://" + org + ".maps.arcgis.com" : "https://www.arcgis.com";
+      portalSharing = portalBase + "/sharing";
+      IdentityManager.registerOAuthInfos([new OAuthInfo({
+        appId:     CLIENT_ID,
+        portalUrl: portalBase,
+        popup:     false,
+        flowType:  "implicit"
+      })]);
+    }
+  }
+
+  // Clean up hash from URL
   if (window.location.hash) {
     history.replaceState(null, "", window.location.pathname + window.location.search);
   }
