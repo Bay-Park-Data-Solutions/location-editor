@@ -484,8 +484,8 @@ require([
       if (lonF) attrs[lonF] = parseFloat(lon.toFixed(6));
 
       // newGeom can be an ArcGIS Point object or a plain {latitude, longitude} object
-      var lat = typeof newGeom.latitude  === "function" ? newGeom.latitude  : newGeom.latitude;
-      var lon = typeof newGeom.longitude === "function" ? newGeom.longitude : newGeom.longitude;
+      var lat = newGeom.latitude;
+      var lon = newGeom.longitude;
 
       var updated = {
         attributes: attrs,
